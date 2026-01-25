@@ -1,0 +1,13 @@
+# Eclipse / IDE
+.metadata/
+.idea/
+.vscode/
+
+# Java / Spring Boot
+target/
+*.log
+
+# Config / secrets
+application.properties
+application.yml
+.env
