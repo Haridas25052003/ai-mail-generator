@@ -18,6 +18,35 @@ public class GeneratedEmail {
 	private String body;
 	@ManyToOne
 	private EmailRequest emailRequest;
+	@Override
+	public String toString() {
+		return "GeneratedEmail [id=" + id + ", subject=" + subject + ", body=" + body + ", emailRequest=" + emailRequest
+				+ "]";
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getSubject() {
+		return subject;
+	}
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
+	public String getBody() {
+		return body;
+	}
+	public void setBody(String body) {
+		this.body = body;
+	}
+	public EmailRequest getEmailRequest() {
+		return emailRequest;
+	}
+	public void setEmailRequest(EmailRequest emailRequest) {
+		this.emailRequest = emailRequest;
+	}
 	
 	
 
