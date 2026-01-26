@@ -1,148 +1,90 @@
 📨 AI Job Application Mail Generator (Backend)
-📌 Overview
-
-The AI Job Application Mail Generator is a Spring Boot–based backend application that generates professional job application emails using Artificial Intelligence. The system accepts job-related inputs such as company name, job designation, and job description, and produces a well-structured email using an AI language model. Generated emails are stored and can be retrieved later as user-specific history.
-
+A robust Spring Boot backend that leverages Artificial Intelligence to craft professional, tailored job application emails. By analyzing job descriptions and company details, this system automates the tedious part of the job hunt while maintaining a personalized touch.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 🛠️ Tech Stack
+Language: Java (17+)
 
-Java
+Framework: Spring Boot (Data JPA, Web)
 
-Spring Boot
+Database: MySQL
 
-Hibernate / JPA
+ORM: Hibernate
 
-MySQL
+AI Integration: Groq Cloud API / LLM REST Integration
 
-REST APIs
-
-AI Integration (Groq / LLM API)
-
+Build Tool: Maven
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 🚀 Key Features
+AI-Powered Generation: Generates context-aware emails based on job designation and company culture.
 
-AI-powered job application email generation
+User Persistence: Simple email-based identification to track history without complex password overhead.
 
-Email-based user identification (no password authentication)
+History Retrieval: Users can access all their previously generated emails at any time.
 
-Persistent storage of generated emails using Hibernate/JPA
+Layered Architecture: Follows industry-standard Controller-Service-Repository patterns.
 
-User-specific email history retrieval
-
-RESTful backend architecture
-
-🧠 How the AI Integration Works
-
-User submits job details (company, designation, job description).
-
-Backend constructs a structured prompt for the AI model.
-
-The AI API generates a professional job application email.
-
-The generated email is stored in the database.
-
-User can view previously generated emails via history API.
-
+Prompt Engineering: Structured backend logic to ensure the AI output is professional and formatted correctly.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 🏗️ Application Architecture
+The project is built with a focus on scalability and clean code:
 
-The backend follows a layered architecture:
+Controller Layer: Manages REST endpoints and request validation.
 
-Controller Layer – Handles HTTP requests and responses
+Service Layer: Orchestrates business logic and handles external AI API communication.
 
-Service Layer – Contains business logic and AI integration
+Repository Layer: Utilizes Spring Data JPA for seamless MySQL operations.
 
-Repository Layer – Manages database operations using JPA
-
-Entity Layer – Represents database tables
-
-📂 Major Modules
-
-User Module – Handles user creation and identification
-
-Email Request Module – Stores job-related input data
-
-Generated Email Module – Stores AI-generated email content
-
-AI Service Module – Communicates with the AI API
-
+Entity Layer: Defines the schema for Users, Email Requests, and Generated Content.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 🔗 REST API Endpoints
-🔹 Register / Identify User
+🔹 User Authentication
 POST /auth/register
 
+Purpose: Register or identify a user.
 
-Parameters:
+Body: { "name": "string", "email": "string" }
 
-name
-
-email
-
-Creates a new user or returns an existing user.
-
-🔹 Generate Job Application Email
+🔹 Email Generation
 POST /api/email/generate
 
+Purpose: Triggers AI generation and stores the result.
 
-Parameters:
+Body: { "userId": Long, "designation": "string", "company": "string", "jobDescription": "text" }
 
-userId
-
-designation
-
-company
-
-jobDescription
-
-Generates an AI-based job application email and stores it in the database.
-
-🔹 Get Email History
+🔹 History Management
 GET /api/email/history/{userId}
 
+Purpose: Retrieves all saved emails for the specific user.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+⚙️ Configuration & Setup
+Clone the repository:
 
-Returns all previously generated emails for a specific user.
+Bash
+git clone https://github.com/Haridas25052003/your-repo-name.git
+Configure application.properties:
 
-🗄️ Database Design
+Set your spring.datasource.url, username, and password.
 
-User – Stores user information
+Add your AI API Key: ai.api.key=your_groq_key_here.
 
-EmailRequest – Stores job-related input data
+Run the application:
 
-GeneratedEmail – Stores AI-generated email content
-
-Relationships are maintained using JPA mappings to ensure data consistency.
-
-⚙️ Configuration
-
-AI API key is configured using application properties.
-
-Database connection is configured via application.properties.
-
-Hibernate handles table creation and ORM mapping.
-
-✅ Error Handling
-
-Validates required request parameters before processing.
-
-Returns appropriate HTTP status codes for invalid requests.
-
-Prevents duplicate user creation using email-based identification.
-
-🎯 Use Cases
-
-Job seekers generating professional application emails
-
-AI-assisted content generation systems
-
-Backend demonstration of AI integration using Spring Boot
-
+Bash
+mvn spring-boot:run
 📈 Future Enhancements
+[ ] JWT Authentication: Adding secure login layers.
 
-Authentication using JWT or OAuth
+[ ] PDF Export: Allow users to download the generated email as a PDF.
 
-Download generated emails as PDF or text
+[ ] Multi-Tone Selection: Options for "Formal," "Creative," or "Short" email styles.
 
-AI prompt optimization for different job roles
-
-Analytics on email generation usage
-
+[ ] Attachment Parsing: Extracting data directly from uploaded Resumes.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 👨‍💻 Author
-
 Haridas Shinde
-Backend Developer | Java | Spring Boot
+
+Role: Backend Developer
+
+LinkedIn: Your Profile
+
+Portfolio: haridas-portfolio.vercel.app
