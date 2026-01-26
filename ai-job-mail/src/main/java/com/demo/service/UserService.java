@@ -42,5 +42,21 @@ public class UserService {
                 
     }
 	
+	//register
+	public User register(String name,String email) {
+		User existing=userRepository.findByEmail(email);
+		
+		if(existing!=null) {
+			throw new RuntimeException("user already registered");
+		}
+		
+		User user=new User();
+		user.setName(name);
+		user.setEmail(email);
+		
+		return userRepository.save(user);
+		
+	}
+	
 
 }
