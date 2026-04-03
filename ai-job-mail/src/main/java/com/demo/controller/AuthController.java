@@ -1,49 +1,37 @@
 package com.demo.controller;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.demo.model.User;
+import com.demo.dto.AuthRequest;
+import com.demo.dto.AuthResponse;
 import com.demo.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin
+@RequiredArgsConstructor
 public class AuthController {
-	
-	@Autowired
-	private UserService userService;
-	
-	//register first
+
+	private final UserService userService;
+
 	@PostMapping("/register")
-	public User register(
-			@RequestParam String name,
-			@RequestParam String email) {
-		return userService.register(name, email);
-	}
-	
-	
-	//login
-	@PostMapping("/login")
-	public User login(
-			@RequestParam String name,
-			@RequestParam String email) {
-		
-		return userService.getOrCreateUser(name, email);
-	}
-	
-	//optional if admin page created for getting all user in dashboard
-	@GetMapping("/req1/{id}")
-	public User m1(@PathVariable int id){
-		return userService.getUserById(id);
+	public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
+		// @RequestBody JSON > @RequestParam  (better for frontend fetch/axios)
+		// @Valid triggers bean validation (@NotBlank, @Email) before hitting service
+		return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(request));
 	}
 
+	@PostMapping("/login")
+	public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+		return ResponseEntity.ok(userService.login(request));
+	}
+
+	// Admin: get user by ID
+	@GetMapping("/users/{id}")
+	public ResponseEntity<AuthResponse> getUserById(@PathVariable Long id) {
+		return ResponseEntity.ok(userService.getUserById(id));
+	}
 }

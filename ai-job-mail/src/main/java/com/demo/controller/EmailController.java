@@ -1,57 +1,45 @@
 package com.demo.controller;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.demo.model.GeneratedEmail;
+import com.demo.dto.EmailGenerateRequest;
+import com.demo.dto.EmailGenerateResponse;
+import com.demo.dto.EmailHistoryResponse;
 import com.demo.service.EmailService;
-import com.demo.service.GroqService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/email")
 @CrossOrigin
+@RequiredArgsConstructor
 public class EmailController {
-	
-	@Autowired
-	private GroqService groqService;
-	
-	@Autowired
-	private EmailService emailService;
-	
+
+	private final EmailService emailService;
+
+	/**
+	 * POST /api/email/generate
+	 * Accepts JSON body (EmailGenerateRequest DTO).
+	 * If userId is present, saves to history. Works for guests too.
+	 */
 	@PostMapping("/generate")
-	public String generateEmail(
-			@RequestParam String company,
-			@RequestParam String designation,
-			@RequestParam String jobDescription) {
-		
-		String name="Candidate";
-		
-		return groqService.generateEmail(name, designation, company, jobDescription);
-	}
-	
-	//for browser testing purpose
-	@GetMapping("/generate")
-	public String generateEmailByBrowser(
-			@RequestParam String company,
-			@RequestParam String designation,
-			@RequestParam String jobDescription) {
-		
-		String name="Candidate";
-		
-		return groqService.generateEmail(name, designation, company, jobDescription);
-	}
-	
-	@GetMapping("/history/{userId}")
-	public List<GeneratedEmail> getEmailHistory(@PathVariable int userId){
-		return emailService.getUserEmailHistory(userId);
+	public ResponseEntity<EmailGenerateResponse> generate(
+			@Valid @RequestBody EmailGenerateRequest request) {
+
+		EmailGenerateResponse response = emailService.generateAndSave(request);
+		return ResponseEntity.ok(response);
 	}
 
+	/**
+	 * GET /api/email/history/{userId}
+	 * Returns flat DTOs — no entity leaks, no N+1.
+	 */
+	@GetMapping("/history/{userId}")
+	public ResponseEntity<List<EmailHistoryResponse>> history(
+			@PathVariable Long userId) {
+
+		return ResponseEntity.ok(emailService.getUserEmailHistory(userId));
+	}
 }
