@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MailCraft — AI Job Email Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Karla:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        /* ── Reset & Variables ────────────────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+          --bg:        #0d0d0d;
+          --bg2:       #141414;
+          --bg3:       #1c1c1c;
+          --surface:   #1f1f1f;
+          --border:    #2a2a2a;
+          --border2:   #333;
+          --ink:       #f0ece3;
+          --ink2:      #a09890;
+          --ink3:      #5c5650;
+          --accent:    #e8c547;       /* gold */
+          --accent2:   #c4a832;
+          --red:       #e85547;
+          --green:     #47e8a0;
+          --font-head: 'Bebas Neue', sans-serif;
+          --font-body: 'Karla', sans-serif;
+          --font-serif:'DM Serif Display', serif;
+          --font-mono: 'DM Mono', monospace;
+          --radius:    4px;
+          --shadow:    0 8px 40px rgba(0,0,0,0.6);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+          background: var(--bg);
+          color: var(--ink);
+          font-family: var(--font-body);
+          font-size: 15px;
+          min-height: 100vh;
+          overflow-x: hidden;
+        }
+
+        /* ── Noise overlay ────────────────────────────────────────────────────── */
+        body::before {
+          content:'';
+          position: fixed;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none;
+          z-index: 999;
+          opacity: 0.5;
+        }
+
+        /* ── Header ───────────────────────────────────────────────────────────── */
+        header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px 40px;
+          border-bottom: 1px solid var(--border);
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: rgba(13,13,13,0.92);
+          backdrop-filter: blur(12px);
+        }
+
+        .logo {
+          font-family: var(--font-head);
+          font-size: 28px;
+          letter-spacing: 3px;
+          color: var(--ink);
+        }
+        .logo span { color: var(--accent); }
+
+        .header-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .user-chip {
+          display: none;
+          align-items: center;
+          gap: 8px;
+          background: var(--surface);
+          border: 1px solid var(--border2);
+          padding: 6px 14px;
+          border-radius: 100px;
+          font-size: 13px;
+          color: var(--ink2);
+        }
+        .user-chip.visible { display: flex; }
+        .user-dot {
+          width: 7px; height: 7px;
+          border-radius: 50%;
+          background: var(--green);
+          box-shadow: 0 0 8px var(--green);
+        }
+
+        /* ── Tabs ─────────────────────────────────────────────────────────────── */
+        .tabs {
+          display: flex;
+          gap: 2px;
+          background: var(--bg2);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 3px;
+        }
+        .tab-btn {
+          padding: 7px 18px;
+          border-radius: calc(var(--radius) - 1px);
+          border: none;
+          background: transparent;
+          color: var(--ink3);
+          font-family: var(--font-body);
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all .2s;
+          letter-spacing: .5px;
+        }
+        .tab-btn.active {
+          background: var(--surface);
+          color: var(--accent);
+          border: 1px solid var(--border2);
+        }
+
+        /* ── Main layout ──────────────────────────────────────────────────────── */
+        main {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 40px 24px 80px;
+        }
+
+        /* ── Page views ───────────────────────────────────────────────────────── */
+        .view { display: none; animation: fadeUp .35s ease both; }
+        .view.active { display: block; }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Hero (auth page) ─────────────────────────────────────────────────── */
+        .hero {
+          text-align: center;
+          padding: 60px 0 48px;
+        }
+        .hero-eyebrow {
+          font-family: var(--font-mono);
+          font-size: 11px;
+          letter-spacing: 3px;
+          color: var(--accent);
+          text-transform: uppercase;
+          margin-bottom: 18px;
+        }
+        .hero h1 {
+          font-family: var(--font-serif);
+          font-size: clamp(42px, 6vw, 72px);
+          line-height: 1.1;
+          color: var(--ink);
+          margin-bottom: 16px;
+        }
+        .hero h1 em {
+          font-style: italic;
+          color: var(--accent);
+        }
+        .hero p {
+          color: var(--ink2);
+          font-size: 16px;
+          max-width: 480px;
+          margin: 0 auto 48px;
+          line-height: 1.7;
+        }
+
+        /* ── Auth cards ───────────────────────────────────────────────────────── */
+        .auth-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          max-width: 740px;
+          margin: 0 auto;
+        }
+        @media (max-width: 600px) { .auth-grid { grid-template-columns: 1fr; } }
+
+        .card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 28px;
+          transition: border-color .2s;
+        }
+        .card:hover { border-color: var(--border2); }
+
+        .card-label {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: var(--accent);
+          margin-bottom: 18px;
+        }
+        .card h3 {
+          font-family: var(--font-head);
+          font-size: 22px;
+          letter-spacing: 1px;
+          color: var(--ink);
+          margin-bottom: 20px;
+        }
+
+        /* ── Form elements ────────────────────────────────────────────────────── */
+        .field { margin-bottom: 14px; }
+        .field label {
+          display: block;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          color: var(--ink3);
+          margin-bottom: 6px;
+        }
+        .field input,
+        .field textarea,
+        .field select {
+          width: 100%;
+          background: var(--bg);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          color: var(--ink);
+          font-family: var(--font-body);
+          font-size: 14px;
+          padding: 10px 13px;
+          transition: border-color .2s, box-shadow .2s;
+          outline: none;
+          -webkit-appearance: none;
+        }
+        .field input::placeholder,
+        .field textarea::placeholder { color: var(--ink3); }
+        .field input:focus,
+        .field textarea:focus {
+          border-color: var(--accent2);
+          box-shadow: 0 0 0 3px rgba(232,197,71,0.08);
+        }
+        .field textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+        /* ── Buttons ──────────────────────────────────────────────────────────── */
+        .btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 11px 22px;
+          border-radius: var(--radius);
+          border: none;
+          font-family: var(--font-body);
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all .2s;
+          letter-spacing: .4px;
+        }
+        .btn-primary {
+          background: var(--accent);
+          color: #0d0d0d;
+          width: 100%;
+          margin-top: 4px;
+        }
+        .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled {
+          background: var(--border2);
+          color: var(--ink3);
+          cursor: not-allowed;
+          transform: none;
+        }
+        .btn-ghost {
+          background: transparent;
+          border: 1px solid var(--border2);
+          color: var(--ink2);
+        }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── Generate view ────────────────────────────────────────────────────── */
+        .gen-layout {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 24px;
+          align-items: start;
+        }
+        @media (max-width: 760px) { .gen-layout { grid-template-columns: 1fr; } }
+
+        .panel-title {
+          font-family: var(--font-head);
+          font-size: 13px;
+          letter-spacing: 3px;
+          color: var(--ink3);
+          text-transform: uppercase;
+          margin-bottom: 16px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid var(--border);
+        }
+
+        /* ── Output area ──────────────────────────────────────────────────────── */
+        .output-box {
+          background: var(--bg2);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          min-height: 420px;
+          display: flex;
+          flex-direction: column;
+        }
+        .output-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 18px;
+          border-bottom: 1px solid var(--border);
+        }
+        .output-status {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+          font-family: var(--font-mono);
+          color: var(--ink3);
+        }
+        .status-dot {
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: var(--border2);
+          transition: background .3s;
+        }
+        .status-dot.generating {
+          background: var(--accent);
+          animation: pulse 1s infinite;
+        }
+        .status-dot.done { background: var(--green); }
+
+        @keyframes pulse {
+          0%,100% { opacity: 1; }
+          50%      { opacity: 0.3; }
+        }
+
+        .output-actions { display: flex; gap: 8px; }
+
+        .output-body {
+          flex: 1;
+          padding: 20px;
+          font-family: var(--font-body);
+          font-size: 14px;
+          line-height: 1.8;
+          color: var(--ink2);
+          white-space: pre-wrap;
+          overflow-y: auto;
+        }
+
+        .output-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          min-height: 300px;
+          gap: 12px;
+          color: var(--ink3);
+        }
+        .output-empty-icon {
+          font-size: 40px;
+          opacity: 0.3;
+        }
+        .output-empty p {
+          font-size: 13px;
+          font-family: var(--font-mono);
+          letter-spacing: 1px;
+        }
+
+        .subject-line {
+          background: var(--bg3);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 10px 14px;
+          margin-bottom: 16px;
+          font-size: 12px;
+        }
+        .subject-line span {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: var(--accent);
+          display: block;
+          margin-bottom: 4px;
+        }
+        .subject-line strong {
+          color: var(--ink);
+          font-weight: 500;
+        }
+
+        /* ── Typewriter effect ────────────────────────────────────────────────── */
+        .typewriter { display: inline; }
+
+        /* ── History view ─────────────────────────────────────────────────────── */
+        .history-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+        }
+        .history-header h2 {
+          font-family: var(--font-serif);
+          font-size: 30px;
+          color: var(--ink);
+        }
+
+        .history-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 16px;
+        }
+
+        .history-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 20px;
+          cursor: pointer;
+          transition: border-color .2s, transform .15s;
+          position: relative;
+          overflow: hidden;
+        }
+        .history-card::before {
+          content:'';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 2px;
+          background: var(--accent);
+          transform: scaleX(0);
+          transition: transform .25s;
+          transform-origin: left;
+        }
+        .history-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+        .history-card:hover::before { transform: scaleX(1); }
+
+        .history-card-company {
+          font-family: var(--font-head);
+          font-size: 18px;
+          letter-spacing: 1px;
+          color: var(--ink);
+          margin-bottom: 4px;
+        }
+        .history-card-role {
+          font-size: 12px;
+          color: var(--ink2);
+          margin-bottom: 12px;
+        }
+        .history-card-subject {
+          font-size: 13px;
+          color: var(--ink3);
+          border-top: 1px solid var(--border);
+          padding-top: 10px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .history-card-date {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          color: var(--ink3);
+          margin-top: 8px;
+        }
+
+        /* ── Modal ────────────────────────────────────────────────────────────── */
+        .modal-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.75);
+          z-index: 200;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+        .modal {
+          background: var(--surface);
+          border: 1px solid var(--border2);
+          border-radius: 10px;
+          width: min(640px, 94vw);
+          max-height: 80vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: var(--shadow);
+          animation: slideUp .25s ease;
+        }
+        @keyframes slideUp {
+          from { opacity:0; transform: translateY(30px) }
+          to   { opacity:1; transform: translateY(0) }
+        }
+        .modal-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 18px 22px;
+          border-bottom: 1px solid var(--border);
+        }
+        .modal-head h3 { font-family: var(--font-serif); font-size: 20px; }
+        .modal-close {
+          background: none;
+          border: none;
+          color: var(--ink3);
+          font-size: 20px;
+          cursor: pointer;
+          line-height: 1;
+          padding: 4px 8px;
+          border-radius: 4px;
+          transition: color .2s;
+        }
+        .modal-close:hover { color: var(--ink); }
+        .modal-body { padding: 22px; overflow-y: auto; line-height: 1.8; font-size: 14px; white-space: pre-wrap; }
+
+        /* ── Toast ────────────────────────────────────────────────────────────── */
+        .toast-container {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 300;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .toast {
+          background: var(--surface);
+          border: 1px solid var(--border2);
+          padding: 12px 18px;
+          border-radius: 6px;
+          font-size: 13px;
+          color: var(--ink);
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          box-shadow: var(--shadow);
+          animation: toastIn .25s ease;
+          min-width: 240px;
+        }
+        @keyframes toastIn {
+          from { opacity:0; transform: translateX(20px) }
+          to   { opacity:1; transform: translateX(0) }
+        }
+        .toast.success .toast-icon { color: var(--green); }
+        .toast.error   .toast-icon { color: var(--red); }
+        .toast.info    .toast-icon { color: var(--accent); }
+
+        /* ── Loading skeleton ─────────────────────────────────────────────────── */
+        .skeleton {
+          background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.4s infinite;
+          border-radius: 4px;
+          height: 14px;
+          margin-bottom: 10px;
+        }
+        @keyframes shimmer {
+          from { background-position: 200% 0 }
+          to   { background-position: -200% 0 }
+        }
+
+        /* ── Empty state ──────────────────────────────────────────────────────── */
+        .empty-state {
+          text-align: center;
+          padding: 80px 0;
+          color: var(--ink3);
+        }
+        .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; font-family: var(--font-mono); }
+
+        /* ── Divider ──────────────────────────────────────────────────────────── */
+        .divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: var(--ink3);
+          font-size: 11px;
+          font-family: var(--font-mono);
+          letter-spacing: 1px;
+          margin: 10px 0;
+        }
+        .divider::before, .divider::after {
+          content:'';
+          flex: 1;
+          height: 1px;
+          background: var(--border);
+        }
+
+        /* ── Scrollbar ────────────────────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header>
+    <div class="logo">MAIL<span>CRAFT</span></div>
+    <div class="header-right">
+        <div class="user-chip" id="userChip">
+            <div class="user-dot"></div>
+            <span id="userChipName">—</span>
+        </div>
+        <div class="tabs" id="navTabs" style="display:none">
+            <button class="tab-btn active" onclick="showView('generate')">Generate</button>
+            <button class="tab-btn" onclick="showView('history')">History</button>
+            <button class="tab-btn btn-ghost" onclick="logout()" style="font-size:12px;padding:7px 14px">Sign out</button>
+        </div>
+    </div>
+</header>
+
+<!-- ── Main ────────────────────────────────────────────────────────────── -->
+<main>
+
+    <!-- AUTH VIEW -->
+    <div class="view active" id="view-auth">
+        <div class="hero">
+            <div class="hero-eyebrow">✦ AI-Powered Cold Email Generator</div>
+            <h1>Write emails that<br><em>get you hired.</em></h1>
+            <p>Paste a job description. Get a tailored, professional cold email in seconds.</p>
+        </div>
+
+        <div class="auth-grid">
+            <!-- Register -->
+            <div class="card">
+                <div class="card-label">New here</div>
+                <h3>Create Account</h3>
+                <div class="field">
+                    <label>Full Name</label>
+                    <input type="text" id="reg-name" placeholder="Jane Doe" />
+                </div>
+                <div class="field">
+                    <label>Email Address</label>
+                    <input type="email" id="reg-email" placeholder="jane@example.com" />
+                </div>
+                <button class="btn btn-primary" onclick="handleRegister()">Create Account →</button>
+            </div>
+
+            <!-- Login -->
+            <div class="card">
+                <div class="card-label">Welcome back</div>
+                <h3>Sign In</h3>
+                <div class="field">
+                    <label>Full Name</label>
+                    <input type="text" id="login-name" placeholder="Jane Doe" />
+                </div>
+                <div class="field">
+                    <label>Email Address</label>
+                    <input type="email" id="login-email" placeholder="jane@example.com" />
+                </div>
+                <button class="btn btn-primary" onclick="handleLogin()">Sign In →</button>
+
+                <div class="divider" style="margin-top:18px">or</div>
+                <button class="btn btn-ghost" style="width:100%;margin-top:4px" onclick="continueAsGuest()">
+                    Continue as Guest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERATE VIEW -->
+    <div class="view" id="view-generate">
+        <div class="gen-layout">
+
+            <!-- Left: Input form -->
+            <div>
+                <div class="panel-title">Job Details</div>
+                <div class="card" style="padding:22px">
+                    <div class="field">
+                        <label>Your Name</label>
+                        <input type="text" id="gen-name" placeholder="Jane Doe" />
+                    </div>
+                    <div class="field">
+                        <label>Company</label>
+                        <input type="text" id="gen-company" placeholder="Acme Corp" />
+                    </div>
+                    <div class="field">
+                        <label>Designation / Role</label>
+                        <input type="text" id="gen-role" placeholder="Senior Backend Engineer" />
+                    </div>
+                    <div class="field">
+                        <label>Job Description</label>
+                        <textarea id="gen-jd" rows="8" placeholder="Paste the full job description here…"></textarea>
+                    </div>
+                    <button class="btn btn-primary" id="genBtn" onclick="handleGenerate()">
+                        <span id="genBtnText">Generate Email ✦</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Output -->
+            <div>
+                <div class="panel-title">Generated Email</div>
+                <div class="output-box">
+                    <div class="output-header">
+                        <div class="output-status">
+                            <div class="status-dot" id="statusDot"></div>
+                            <span id="statusText">Awaiting input</span>
+                        </div>
+                        <div class="output-actions">
+                            <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="copyEmail()" id="copyBtn" style="display:none">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="output-body" id="outputBody">
+                        <div class="output-empty">
+                            <div class="output-empty-icon">✉</div>
+                            <p>Your email will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div class="view" id="view-history">
+        <div class="history-header">
+            <h2>Email History</h2>
+            <button class="btn btn-ghost" onclick="loadHistory()">↻ Refresh</button>
+        </div>
+        <div class="history-grid" id="historyGrid">
+            <div class="empty-state" style="grid-column:1/-1">
+                <div class="big">📭</div>
+                <p>No emails yet. Generate one first!</p>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ── Email Preview Modal ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal">
+        <div class="modal-head">
+            <h3 id="modalTitle">Email Preview</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<!-- ── Toast container ─────────────────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    /* ── Config ──────────────────────────────────────────────────────────── */
+    const API = '';   // empty = same origin (Spring serves static + API together)
+
+    /* ── State ───────────────────────────────────────────────────────────── */
+    let currentUser = null;       // { id, name, email }
+    let lastEmail   = null;       // { subject, body }
+
+    /* ── On load: restore session ────────────────────────────────────────── */
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('mc_user');
+      if (saved) {
+        try {
+          currentUser = JSON.parse(saved);
+          enterApp();
+        } catch { localStorage.removeItem('mc_user'); }
+      }
+    });
+
+    /* ── Auth ─────────────────────────────────────────────────────────────── */
+    async function handleRegister() {
+      const name  = v('reg-name').trim();
+      const email = v('reg-email').trim();
+      if (!name || !email) { toast('Please fill in both fields', 'error'); return; }
+
+      try {
+        const res = await api('POST', '/auth/register', { name, email });
+        currentUser = res;
+        saveUser();
+        toast(`Welcome, ${res.name}! 🎉`, 'success');
+        enterApp();
+      } catch (e) {
+        toast(e.message || 'Registration failed', 'error');
+      }
+    }
+
+    async function handleLogin() {
+      const name  = v('login-name').trim();
+      const email = v('login-email').trim();
+      if (!name || !email) { toast('Please fill in both fields', 'error'); return; }
+
+      try {
+        const res = await api('POST', '/auth/login', { name, email });
+        currentUser = res;
+        saveUser();
+        toast(`Welcome back, ${res.name}!`, 'success');
+        enterApp();
+      } catch (e) {
+        toast(e.message || 'Login failed', 'error');
+      }
+    }
+
+    function continueAsGuest() {
+      currentUser = null;
+      toast('Continuing as guest — emails won\'t be saved', 'info');
+      enterApp();
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('mc_user');
+      lastEmail = null;
+      document.getElementById('navTabs').style.display = 'none';
+      document.getElementById('userChip').classList.remove('visible');
+      showViewRaw('auth');
+      toast('Signed out', 'info');
+    }
+
+    function enterApp() {
+      document.getElementById('navTabs').style.display = 'flex';
+      if (currentUser) {
+        const chip = document.getElementById('userChip');
+        document.getElementById('userChipName').textContent = currentUser.name;
+        chip.classList.add('visible');
+      }
+      showView('generate');
+    }
+
+    function saveUser() {
+      localStorage.setItem('mc_user', JSON.stringify(currentUser));
+    }
+
+    /* ── Generate ─────────────────────────────────────────────────────────── */
+    async function handleGenerate() {
+      const name = v('gen-name').trim() || (currentUser?.name) || 'Candidate';
+      const company = v('gen-company').trim();
+      const role    = v('gen-role').trim();
+      const jd      = v('gen-jd').trim();
+
+      if (!company || !role || !jd) {
+        toast('Please fill in company, role, and job description', 'error');
+        return;
+      }
+
+      setGenerating(true);
+
+      try {
+        const payload = {
+          candidateName: name,
+          company,
+          designation: role,
+          jobDescription: jd,
+        };
+        if (currentUser?.id) payload.userId = currentUser.id;
+
+        const res = await api('POST', '/api/email/generate', payload);
+        lastEmail = res;
+        renderEmail(res);
+        if (currentUser) toast('Email saved to history ✓', 'success');
+
+      } catch (e) {
+        toast(e.message || 'Generation failed', 'error');
+        setGenerating(false);
+      }
+    }
+
+    function setGenerating(on) {
+      const btn  = document.getElementById('genBtn');
+      const txt  = document.getElementById('genBtnText');
+      const dot  = document.getElementById('statusDot');
+      const stat = document.getElementById('statusText');
+      btn.disabled = on;
+      txt.textContent = on ? 'Generating…' : 'Generate Email ✦';
+      dot.className   = 'status-dot ' + (on ? 'generating' : '');
+      stat.textContent= on ? 'Generating…' : 'Awaiting input';
+    }
+
+    function renderEmail({ subject, body }) {
+      const dot  = document.getElementById('statusDot');
+      const stat = document.getElementById('statusText');
+      dot.className    = 'status-dot done';
+      stat.textContent = 'Ready';
+
+      const out = document.getElementById('outputBody');
+      out.innerHTML = `
+        <div class="subject-line">
+          <span>Subject</span>
+          <strong>${esc(subject)}</strong>
+        </div>
+        <div id="typeTarget" style="color:var(--ink);white-space:pre-wrap;line-height:1.8;font-size:14px"></div>
+      `;
+
+      document.getElementById('copyBtn').style.display = 'inline-flex';
+      document.getElementById('genBtn').disabled = false;
+      document.getElementById('genBtnText').textContent = 'Generate Email ✦';
+
+      // Typewriter
+      typewrite(document.getElementById('typeTarget'), body);
+    }
+
+    function typewrite(el, text, speed = 8) {
+      let i = 0;
+      const tick = () => {
+        if (i < text.length) {
+          el.textContent += text[i++];
+          setTimeout(tick, speed);
+        }
+      };
+      tick();
+    }
+
+    /* ── Copy ─────────────────────────────────────────────────────────────── */
+    function copyEmail() {
+      if (!lastEmail) return;
+      const full = `Subject: ${lastEmail.subject}\n\n${lastEmail.body}`;
+      navigator.clipboard.writeText(full).then(() => toast('Copied to clipboard!', 'success'));
+    }
+
+    /* ── History ──────────────────────────────────────────────────────────── */
+    async function loadHistory() {
+      if (!currentUser) {
+        document.getElementById('historyGrid').innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="big">🔒</div>
+            <p>Sign in to view your email history</p>
+          </div>`;
+        return;
+      }
+
+      document.getElementById('historyGrid').innerHTML =
+        Array(3).fill('<div><div class="skeleton"></div><div class="skeleton" style="width:60%"></div><div class="skeleton" style="width:80%;margin-top:16px"></div></div>').join('');
+
+      try {
+        const history = await api('GET', `/api/email/history/${currentUser.id}`);
+        renderHistory(history);
+      } catch (e) {
+        toast('Failed to load history', 'error');
+      }
+    }
+
+    function renderHistory(items) {
+      const grid = document.getElementById('historyGrid');
+      if (!items.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">📭</div><p>No emails yet. Generate one first!</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(item => `
+        <div class="history-card" onclick="openModal('${esc(item.company)} — ${esc(item.position)}', ${JSON.stringify(JSON.stringify('Subject: ' + item.subject + '\n\n' + item.body))})">
+          <div class="history-card-company">${esc(item.company)}</div>
+          <div class="history-card-role">${esc(item.position)}</div>
+          <div class="history-card-subject">${esc(item.subject)}</div>
+          <div class="history-card-date">${fmtDate(item.generatedAt)}</div>
+        </div>
+      `).join('');
+    }
+
+    /* ── Modal ────────────────────────────────────────────────────────────── */
+    function openModal(title, bodyJson) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').textContent  = JSON.parse(bodyJson);
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal(e) {
+      if (!e || e.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').classList.remove('open');
+      }
+    }
+
+    /* ── Navigation ───────────────────────────────────────────────────────── */
+    function showView(name) {
+      if (name === 'history') loadHistory();
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      const tabs = { generate: 0, history: 1 };
+      const btns = document.querySelectorAll('#navTabs .tab-btn');
+      if (tabs[name] !== undefined) btns[tabs[name]].classList.add('active');
+      showViewRaw(name);
+    }
+
+    function showViewRaw(name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + name).classList.add('active');
+    }
+
+    /* ── Toast ────────────────────────────────────────────────────────────── */
+    function toast(msg, type = 'info') {
+      const icons = { success: '✓', error: '✕', info: '✦' };
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<span class="toast-icon">${icons[type]}</span>${esc(msg)}`;
+      document.getElementById('toastContainer').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    /* ── API helper ───────────────────────────────────────────────────────── */
+    async function api(method, path, body) {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+      };
+      if (body) opts.body = JSON.stringify(body);
+
+      const res = await fetch(API + path, opts);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `HTTP ${res.status}`);
+      }
+      return data;
+    }
+
+    /* ── Utils ────────────────────────────────────────────────────────────── */
+    const v   = id => document.getElementById(id).value;
+    const esc = s  => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+           + ' · ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    }
+</script>
+</body>
+</html>
