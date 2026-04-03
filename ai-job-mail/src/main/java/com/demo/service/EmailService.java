@@ -1,54 +1,92 @@
 package com.demo.service;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
+import com.demo.dto.EmailGenerateRequest;
+import com.demo.dto.EmailGenerateResponse;
+import com.demo.dto.EmailHistoryResponse;
+import com.demo.exception.ResourceNotFoundException;
 import com.demo.model.EmailRequest;
 import com.demo.model.GeneratedEmail;
 import com.demo.model.User;
 import com.demo.repository.EmailRequestRepository;
 import com.demo.repository.GeneratedEmailRepository;
+import com.demo.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Autowired
-    private EmailRequestRepository emailRequestRepository;
+    private final GroqService              groqService;
+    private final EmailRequestRepository   emailRequestRepository;
+    private final GeneratedEmailRepository generatedEmailRepository;
+    private final UserRepository           userRepository;
 
-    @Autowired
-    private GeneratedEmailRepository generatedEmailRepository;
+    /**
+     * Core method: generate email via Groq and optionally persist it
+     * if a userId is provided in the request.
+     */
+    @Transactional
+    public EmailGenerateResponse generateAndSave(EmailGenerateRequest dto) {
 
-    public EmailRequest saveRequest(
-            String position,
-            String company,
-            String jd,
-            User user) {
+        // 1. Call Groq
+        EmailGenerateResponse generated = groqService.generateEmail(
+                dto.getCandidateName(),
+                dto.getDesignation(),
+                dto.getCompany(),
+                dto.getJobDescription()
+        );
 
-        EmailRequest req = new EmailRequest();
-        req.setPosition(position);
-        req.setCompany(company);
-        req.setJobDescription(jd);
-        req.setUser(user);
+        // 2. Persist only if user is logged in (userId provided)
+        if (dto.getUserId() != null) {
+            User user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "User not found: " + dto.getUserId()));
 
-        return emailRequestRepository.save(req);
+            EmailRequest emailRequest = new EmailRequest();
+            emailRequest.setPosition(dto.getDesignation());
+            emailRequest.setCompany(dto.getCompany());
+            emailRequest.setJobDescription(dto.getJobDescription());
+            emailRequest.setUser(user);
+            emailRequestRepository.save(emailRequest);
+
+            GeneratedEmail savedEmail = new GeneratedEmail();
+            savedEmail.setSubject(generated.getSubject());
+            savedEmail.setBody(generated.getBody());
+            savedEmail.setEmailRequest(emailRequest);
+            generatedEmailRepository.save(savedEmail);
+
+            log.info("Email saved to history for userId={}", dto.getUserId());
+        }
+
+        return generated;
     }
 
-    public GeneratedEmail saveGeneratedEmail(
-            String subject,
-            String body,
-            EmailRequest request) {
+    /**
+     * Fetch user's email history as flat DTOs (no entity leaks, no N+1).
+     */
+    @Transactional(readOnly = true)
+    public List<EmailHistoryResponse> getUserEmailHistory(Long userId) {
+        // Verify user exists before querying history
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found: " + userId);
+        }
 
-        GeneratedEmail email = new GeneratedEmail();
-        email.setSubject(subject);
-        email.setBody(body);
-        email.setEmailRequest(request);
-
-        return generatedEmailRepository.save(email);
-    }
-    
-    public List<GeneratedEmail> getUserEmailHistory(int userId){
-    	return generatedEmailRepository.findByEmailRequest_User_Id(userId);
+        return generatedEmailRepository.findByUserId(userId)
+                .stream()
+                .map(ge -> new EmailHistoryResponse(
+                        ge.getId(),
+                        ge.getEmailRequest().getCompany(),
+                        ge.getEmailRequest().getPosition(),
+                        ge.getSubject(),
+                        ge.getBody(),
+                        ge.getGeneratedAt()
+                ))
+                .toList();
     }
 }
