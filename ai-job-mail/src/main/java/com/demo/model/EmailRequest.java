@@ -1,72 +1,43 @@
 package com.demo.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "email_requests")
+@Getter
+@Setter
+@NoArgsConstructor
 public class EmailRequest {
-	
+
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@NotBlank
 	private String position;
+
+	@NotBlank
 	private String company;
-	
-	@Column(columnDefinition="TEXT")
-	private String jobDescription ;
-	
-	@ManyToOne
+
+	@NotBlank
+	@Column(columnDefinition = "TEXT")
+	private String jobDescription;
+
+	@ManyToOne(fetch = FetchType.LAZY)   // LAZY: don't load User unless needed
+	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@Override
-	public String toString() {
-		return "EmailRequest [id=" + id + ", position=" + position + ", company=" + company + ", jobDescription="
-				+ jobDescription + ", user=" + user + "]";
-	}
+	@Column(updatable = false)
+	private LocalDateTime createdAt;
 
-	public int getId() {
-		return id;
+	@PrePersist
+	protected void onCreate() {
+		this.createdAt = LocalDateTime.now();
 	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public String getPosition() {
-		return position;
-	}
-
-	public void setPosition(String position) {
-		this.position = position;
-	}
-
-	public String getCompany() {
-		return company;
-	}
-
-	public void setCompany(String company) {
-		this.company = company;
-	}
-
-	public String getJobDescription() {
-		return jobDescription;
-	}
-
-	public void setJobDescription(String jobDescription) {
-		this.jobDescription = jobDescription;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-	
 }
